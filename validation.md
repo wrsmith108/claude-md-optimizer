@@ -154,6 +154,40 @@ git check-attr filter path/to/sub-docs/*.md
 
 **Pass criteria**: Sub-documents are NOT encrypted, core encryption instructions remain in CLAUDE.md
 
+### Step 7: CI Compliance
+
+If CI scripts were detected that read CLAUDE.md (see [constraints.md](./constraints.md#ci-machine-readable-content-detection)):
+
+- [ ] All CI-scanned regex patterns still match in the new CLAUDE.md
+- [ ] No CI-matched content was extracted to sub-documents
+- [ ] CI audit scripts pass when run against the new CLAUDE.md
+
+**Verification method:**
+
+```bash
+# Step 1: Find scripts that read CLAUDE.md
+SCRIPTS=$(grep -rl "CLAUDE.md" scripts/ .github/ --include="*.mjs" --include="*.js" --include="*.ts" 2>/dev/null)
+
+# Step 2: Run each script against the new CLAUDE.md
+for script in $SCRIPTS; do
+  echo "Testing: $script"
+  node "$script" 2>&1 | tail -5
+done
+
+# Step 3: If running scripts isn't feasible, replay the regex patterns
+# against the new CLAUDE.md to verify matches
+grep -c "deploy.*--no-verify" CLAUDE.md  # Example pattern
+```
+
+**Important**: GitHub CI runs on a **merge commit** (`refs/pull/N/merge`), not the branch HEAD. If `main` has a different CLAUDE.md than the PR branch, the merge resolution may use main's version. This means even restoring the original CLAUDE.md on the PR branch may not fix CI if main has the optimized version.
+
+**Merge commit gotcha**: When CLAUDE.md was optimized on `main` and a feature branch has the old version, the merge commit picks main's version. The only fix is to either:
+1. Update the CI script to also scan sub-documents
+2. Ensure main's CLAUDE.md retains all CI-matched content
+3. Use admin bypass if the failure is purely a documentation tooling issue
+
+**Pass criteria**: All CI scripts that regex-scan CLAUDE.md still find their expected patterns
+
 ## 4. Validation Report Format
 
 Present results to the user after optimization:
@@ -162,24 +196,24 @@ Present results to the user after optimization:
 Optimization Results
 ====================
 
-CLAUDE.md:     1,212 → 256 lines  (-79%)
-Sub-documents: 5 files, 642 lines
-Total content: 898 lines           (no loss)
+CLAUDE.md:     850 → 320 lines  (-62%)
+Sub-documents: 4 files, 580 lines
+Total content: 900 lines           (no loss)
 
 Validation Checks:
-  [PASS] Line count: 898 >= 1,212 original (accounting for added headers/links)
-  [PASS] Reduction: 256 lines = 21% of original (target: < 50%)
-  [PASS] Links: 12 valid, 0 broken
-  [PASS] Sub-Documentation Table: present, 5 entries
+  [PASS] Line count: 900 >= 850 original (accounting for added headers/links)
+  [PASS] Reduction: 320 lines = 38% of original (target: < 50%)
+  [PASS] Links: 8 valid, 0 broken
+  [PASS] Sub-Documentation Table: present, 4 entries
   [PASS] Essential content: all critical sections preserved
   [PASS] Encryption safety: sub-docs in unencrypted directory
+  [PASS] CI compliance: 2 scripts scan CLAUDE.md, all patterns still match
 
 Sub-Documents Created:
-  docs/development/docker-guide.md      155 lines
-  docs/development/git-crypt-guide.md   122 lines
-  docs/development/ci-reference.md      103 lines
-  docs/development/deployment-guide.md  136 lines
-  docs/development/claude-flow-guide.md 126 lines
+  docs/development/docker-guide.md      150 lines
+  docs/development/ci-reference.md      120 lines
+  docs/development/deployment-guide.md  180 lines
+  docs/development/troubleshooting.md   130 lines
 ```
 
 **Report structure:**
@@ -244,6 +278,23 @@ Sub-Documents Created:
 4. Re-run validation
 
 **Prevention**: Test directory encryption status before choosing location
+
+### CI compliance broken
+
+**Symptom**: CI audit or standards compliance check fails after optimization
+
+**Cause**: A CI script reads CLAUDE.md with `readFileSync` and uses regex to find specific strings (e.g., deploy commands, function lists). The matched content was extracted to a sub-document.
+
+**Fix**:
+1. Identify which CI script failed and what regex it uses
+2. Find the extracted content in the sub-document
+3. Move the matched content back to CLAUDE.md (keep Essential)
+4. Re-run CI script locally to verify
+5. Re-run validation
+
+**Prevention**: Always run CI machine-readable content detection (Phase 2, Step 4) before categorizing sections. Content matched by CI regex is force-classified as Essential.
+
+**GitHub merge commit gotcha**: Even if the PR branch has the correct CLAUDE.md, GitHub CI runs on a merge commit that combines the PR with `main`. If `main` has a different (e.g., previously optimized) CLAUDE.md, the merge resolution may use main's version, causing CI to fail regardless of PR branch content. In this case, either update the CI script to scan sub-documents, or use admin bypass.
 
 ### Reduction insufficient (< 50%)
 
@@ -320,9 +371,9 @@ Log all validation steps to a temporary file for debugging:
 
 ```bash
 # Example log format
-echo "Pre-optimization line count: 1212" >> validation.log
-echo "Post-optimization CLAUDE.md: 256" >> validation.log
-echo "Sub-documents total: 642" >> validation.log
+echo "Pre-optimization line count: 850" >> validation.log
+echo "Post-optimization CLAUDE.md: 320" >> validation.log
+echo "Sub-documents total: 580" >> validation.log
 echo "[PASS] Line count validation" >> validation.log
 echo "[PASS] Link integrity" >> validation.log
 ```
@@ -335,7 +386,7 @@ echo "[PASS] Link integrity" >> validation.log
 #!/bin/bash
 # validation.sh - Post-optimization validation
 
-ORIGINAL_LINES=1212  # From pre-optimization baseline
+ORIGINAL_LINES=850  # From pre-optimization baseline
 NEW_CLAUDE=$(wc -l < CLAUDE.md)
 SUB_DOCS=$(find docs/development -name "*.md" -exec wc -l {} + | tail -1 | awk '{print $1}')
 TOTAL=$((NEW_CLAUDE + SUB_DOCS))
@@ -374,6 +425,21 @@ if [ $BROKEN -eq 0 ]; then
 else
   echo "[FAIL] $BROKEN broken links"
   exit 1
+fi
+
+# Check CI compliance
+CI_SCRIPTS=$(grep -rl "CLAUDE.md" scripts/ .github/ --include="*.mjs" --include="*.js" --include="*.ts" 2>/dev/null)
+if [ -n "$CI_SCRIPTS" ]; then
+  echo "CI scripts found: $CI_SCRIPTS"
+  for script in $CI_SCRIPTS; do
+    if node "$script" 2>&1 | grep -qi "fail\|error"; then
+      echo "[FAIL] CI compliance - $script"
+      exit 1
+    fi
+  done
+  echo "[PASS] CI compliance"
+else
+  echo "[SKIP] CI compliance (no scripts scan CLAUDE.md)"
 fi
 
 echo "All checks passed."

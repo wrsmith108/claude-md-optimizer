@@ -57,7 +57,7 @@ For troubleshooting sections where a lookup table provides immediate value but d
 |---------|-----|
 | Container won't start | `docker compose down && docker volume rm ... && docker compose up -d` |
 | DNS failure | `docker network prune -f` then restart |
-| Native module errors | `npm rebuild better-sqlite3 onnxruntime-node` |
+| Native module errors | `npm rebuild <native-module>` |
 
 **Detailed diagnostics**: [troubleshooting.md](path/troubleshooting.md)
 ```
@@ -241,7 +241,7 @@ Is this section needed in EVERY session?
 
 ### Security Section
 
-**Before**: 40 lines of Varlock patterns, safe/unsafe examples, AI agent handling.
+**Before**: 40 lines of secret management patterns, safe/unsafe examples, AI agent handling.
 
 **After**: Use Pattern 2 (Quick-Reference + Link) — essential rule + link to security-guide.md.
 

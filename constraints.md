@@ -23,7 +23,7 @@ grep "filter=git-crypt" .gitattributes | awk '{print $1}'
 # Example output:
 # docs/**
 # .claude/**
-# supabase/**
+# config/**
 ```
 
 ### Parse exclusions (unencrypted paths within encrypted directories)
@@ -154,7 +154,7 @@ Present findings to the user before proceeding:
 ```text
 Encryption Constraints:
   System:     git-crypt
-  Encrypted:  docs/**, .claude/**, supabase/**
+  Encrypted:  docs/**, .claude/**, config/**
   Exceptions: docs/development/*.md, docs/templates/*.md
 
 Safe sub-doc location: docs/development/ (flat files only)
@@ -163,6 +163,81 @@ Chicken-and-egg sections (force Essential):
   - "Git-Crypt (Encrypted Documentation)" (lines 197-312)
   - Contains: git-crypt unlock command, encrypted paths table
 ```
+
+## CI Machine-Readable Content Detection
+
+CI audit scripts may use regex to scan CLAUDE.md for specific literal strings. Extracting those strings to sub-documents breaks CI, even though the content still exists in the project.
+
+### Why This Matters
+
+Unlike human readers who can follow a link to a sub-document, CI scripts read CLAUDE.md with `readFileSync` or `grep` and pattern-match against its contents. Moving matched content to a sub-document causes CI to report false negatives — the content exists but the script can't find it.
+
+**Real-world example**: A project's CI audit script scans CLAUDE.md for deploy commands to verify all services are documented. After optimizing CLAUDE.md, the deploy commands were extracted to a sub-document. CI's compliance check failed because the script only reads CLAUDE.md, not sub-documents.
+
+### Detection Methodology
+
+#### Step 1: Find scripts that read CLAUDE.md
+
+```bash
+# Search for scripts that read CLAUDE.md directly
+grep -rn "CLAUDE.md" scripts/ .github/ --include="*.mjs" --include="*.js" --include="*.ts" --include="*.yml" --include="*.yaml"
+
+# Common patterns to look for:
+# readFileSync('CLAUDE.md')
+# readFileSync('./CLAUDE.md')
+# cat CLAUDE.md
+# grep ... CLAUDE.md
+```
+
+#### Step 2: Extract regex patterns used against CLAUDE.md
+
+```bash
+# Look for regex patterns applied to CLAUDE.md content
+grep -A5 "readFileSync.*CLAUDE" scripts/*.mjs scripts/*.js scripts/*.ts 2>/dev/null
+grep -A5 "match\|exec\|test\|search" scripts/*.mjs scripts/*.js scripts/*.ts 2>/dev/null | grep -i "claude"
+```
+
+#### Step 3: Identify matched content in CLAUDE.md
+
+For each regex pattern found:
+
+1. Run the regex against the current CLAUDE.md
+2. Record all matching lines
+3. Mark those lines as **CI-Essential** (cannot be extracted)
+
+#### Step 4: Map CI-Essential content to sections
+
+```
+CI Machine-Readable Content:
+  Script: scripts/audit-standards.mjs
+  Pattern: /deploy\s+(\S+)\s+--no-verify/g
+  Matches: 12 deploy commands in "Edge Functions" section
+  Action: Keep entire deploy commands block in CLAUDE.md
+```
+
+### Common CI Scan Patterns
+
+| Pattern Type | Example Regex | What It Matches |
+|-------------|---------------|-----------------|
+| Deploy commands | `/deploy\s+(\S+)\s+--no-verify-jwt/g` | Function deployment commands |
+| Function lists | `/functions\.(name)\b/g` | Function name references |
+| Config values | `/"verify_jwt"\s*=\s*false/g` | Configuration settings |
+| URL patterns | `/https?:\/\/[^\s]+/g` | URLs and endpoints |
+| Version strings | `/version:\s*"([^"]+)"/g` | Version references |
+
+### Classification Rule
+
+Content matched by CI regex patterns is **force-classified as Essential**, regardless of how infrequently humans reference it. The CI script runs on every PR — it's the most frequent consumer of that content.
+
+### Workaround Options
+
+If the matched content is large (>100 lines) and bloats CLAUDE.md:
+
+1. **Update the CI script** to also check sub-documents (preferred, but requires code change)
+2. **Keep a minimal stub** in CLAUDE.md that satisfies the regex, with details in sub-doc
+3. **Accept the bloat** — CI reliability trumps CLAUDE.md brevity
+
+**Never silently extract CI-scanned content.** Always flag it to the user with the script path, regex pattern, and matched lines.
 
 ## Implementation Checklist
 
@@ -176,8 +251,10 @@ When implementing constraint detection:
 6. **Verify chosen path** with test file
 7. **Scan for chicken-and-egg content** in sections
 8. **Force Essential classification** for unlock instructions
-9. **Generate constraint report** for user approval
-10. **Document chosen path** in optimization report
+9. **Scan for CI machine-readable dependencies** (scripts that regex-scan CLAUDE.md)
+10. **Force Essential classification** for CI-matched content
+11. **Generate constraint report** for user approval
+12. **Document chosen path** in optimization report
 
 ## Edge Cases
 

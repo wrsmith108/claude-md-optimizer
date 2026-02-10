@@ -45,9 +45,9 @@ Keep content inline in CLAUDE.md if it matches these patterns:
 
 | Command | Docker (REQUIRED) |
 |---------|-------------------|
-| Build | `docker exec skillsmith-dev-1 npm run build` |
-| Test | `docker exec skillsmith-dev-1 npm test` |
-| Lint | `docker exec skillsmith-dev-1 npm run lint` |
+| Build | `docker exec myapp-dev-1 npm run build` |
+| Test | `docker exec myapp-dev-1 npm test` |
+| Lint | `docker exec myapp-dev-1 npm run lint` |
 ```
 
 This is compact (4 lines), contains essential commands, and prevents errors (reminds user of Docker requirement).
@@ -154,7 +154,7 @@ Keep inline (5 lines):
 ```markdown
 ## Docker Development
 
-All commands run inside Docker: `docker exec skillsmith-dev-1 npm <cmd>`
+All commands run inside Docker: `docker exec myapp-dev-1 npm <cmd>`
 
 See [docker-guide.md](docker-guide.md) for container management and troubleshooting.
 ```

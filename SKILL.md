@@ -1,6 +1,6 @@
 ---
 name: "claude-md-optimizer"
-version: "1.0.0"
+version: "1.1.0"
 description: "Optimize oversized CLAUDE.md files using progressive disclosure. Analyzes content tiers, detects encryption constraints, creates sub-documents, and rewrites the main file with a Sub-Documentation Table. Triggers: optimize CLAUDE.md, reduce CLAUDE.md size, CLAUDE.md too long, apply progressive disclosure to CLAUDE.md"
 tags: ["claude-md", "optimization", "progressive-disclosure", "context-window", "documentation"]
 ---
@@ -24,6 +24,7 @@ This skill analyzes CLAUDE.md files and proposes optimizations using progressive
 1. Check `.gitattributes` for `filter=git-crypt diff=git-crypt` patterns
 2. Identify encrypted paths (docs/, .claude/, etc.)
 3. Find safe unencrypted directory for sub-documents (prefer project root or subdirs)
+4. **Scan for CI machine-readable dependencies** (see [constraints.md](./constraints.md))
 
 ### Phase 3: Plan
 Present categorization table to user:
@@ -77,11 +78,19 @@ User confirms:
 - **ALWAYS** keep encryption unlock instructions in main file (chicken-and-egg problem)
 - **ALWAYS** keep security rules, test file patterns, behavioral reminders inline
 - **NEVER** move content that is consulted in >50% of sessions
+- **ALWAYS** keep content that CI scripts parse via regex (see CI Machine-Readable Content below)
 
 ### Encryption Safety
 - Sub-documents **MUST** be in unencrypted directories
 - Check `.gitattributes` for `filter=git-crypt` patterns
 - If entire project is encrypted, warn user and recommend decrypted subdirectory
+
+### CI Machine-Readable Content
+- CI audit scripts may use regex to scan CLAUDE.md for specific literal strings
+- **ALWAYS** scan for scripts that `readFileSync('CLAUDE.md')` or `grep` CLAUDE.md
+- Common patterns: deploy commands, function lists, config references
+- Content matched by CI regex MUST remain in CLAUDE.md — extraction breaks CI
+- See [constraints.md](./constraints.md) for detection methodology
 
 ### Progressive Disclosure
 - Use **Sub-Documentation Table** pattern at top of rewritten CLAUDE.md
@@ -123,12 +132,12 @@ User confirms:
 Extracted:
 - `docker-guide.md` (Docker commands and troubleshooting)
 - `ci-reference.md` (CI health requirements and branch protection)
-- `supabase-functions.md` (Edge function deployment reference)
-- `troubleshooting/native-modules.md` (Native module rebuild procedures)
+- `deployment-guide.md` (Deployment commands and configuration)
+- `troubleshooting.md` (Diagnostic procedures consolidated)
 
 Preserved inline:
-- Git-crypt unlock instructions
-- Security rules (Varlock, API keys)
+- Encryption unlock instructions
+- Security rules (secret handling, API keys)
 - Test file patterns
 - Build commands
 - Behavioral reminders
@@ -143,6 +152,7 @@ Preserved inline:
 - [ ] User approved the plan before execution
 - [ ] Line reduction >50%
 - [ ] No chicken-and-egg problems (encryption, authentication)
+- [ ] CI scripts that regex-scan CLAUDE.md still pass (see CI Machine-Readable Content)
 
 ## Error Handling
 
