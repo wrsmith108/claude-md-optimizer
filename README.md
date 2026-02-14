@@ -46,7 +46,7 @@ The skill will analyze your file and present a plan for approval before making a
 claude-md-optimizer/
 ├── SKILL.md           # Entry point — workflow phases, essential rules, quick reference
 ├── analysis.md        # Content categorization methodology and heuristics
-├── patterns.md        # 6 progressive disclosure patterns with decision tree
+├── patterns.md        # 8 progressive disclosure patterns with decision tree
 ├── constraints.md     # Encryption detection, CI dependency scanning, safe path selection
 ├── validation.md      # Before/after diffing, failure modes, rollback procedure
 └── README.md          # This file
@@ -64,6 +64,7 @@ The skill applies these patterns when rewriting CLAUDE.md:
 | **Summary + Link** | Brief description + link to comprehensive guide |
 | **Inline Essential** | Content that must stay fully inline (no extraction) |
 | **Split** | Keep essential summary inline, extract details |
+| **Terse Agent Hint** | Compress multi-line code blocks to single-line command references |
 
 ## Key Safety Features
 

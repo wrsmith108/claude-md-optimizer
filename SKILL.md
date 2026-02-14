@@ -1,6 +1,6 @@
 ---
 name: "claude-md-optimizer"
-version: "1.1.0"
+version: "1.1.1"
 description: "Optimize oversized CLAUDE.md files using progressive disclosure. Analyzes content tiers, detects encryption constraints, creates sub-documents, and rewrites the main file with a Sub-Documentation Table. Triggers: optimize CLAUDE.md, reduce CLAUDE.md size, CLAUDE.md too long, apply progressive disclosure to CLAUDE.md"
 tags: ["claude-md", "optimization", "progressive-disclosure", "context-window", "documentation"]
 ---

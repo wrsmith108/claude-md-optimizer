@@ -157,7 +157,48 @@ Brief description of what this guide covers.
 
 ---
 
-## 8. Naming Conventions
+## 8. Terse Agent Hint Pattern
+
+For Essential content that stays inline but contains multi-line code blocks. Instead of a full bash script, compress to a single-line command reference with a sub-doc link for the full procedure.
+
+**Before** (high context cost — loads every turn AND generates verbose terminal output):
+
+```markdown
+## Git-Crypt
+
+**Rebase workaround** (smudge filter):
+```bash
+git format-patch -N HEAD -o /tmp/patches/
+git fetch origin main && git reset --hard origin/main
+git am /tmp/patches/*.patch
+```
+```
+
+**After** (low context cost — one line in system prompt, no executable block):
+
+```markdown
+## Git-Crypt
+
+- **Rebase fails** (smudge filter): save with `git format-patch`, reset to `origin/main`, re-apply with `git am` — see [git-crypt-guide.md](path/git-crypt-guide.md)
+```
+
+### When to Use
+
+- Essential content that must stay inline (needed every session)
+- Contains multi-line code blocks (> 3 lines)
+- The code block would generate verbose terminal output if executed by the agent
+- The procedure is a sequence of commands that can be described in one sentence
+
+### Rules
+
+- Name the key commands inline (e.g., `git format-patch`, `git am`) so the agent knows what tools to use
+- Link to the sub-doc for the full step-by-step procedure
+- Keep the hint to a single bullet point or sentence
+- Do not include fenced code blocks — use inline code spans only
+
+---
+
+## 9. Naming Conventions
 
 Sub-documents use kebab-case with domain-based names.
 
@@ -191,7 +232,9 @@ Use this decision tree to select the appropriate pattern:
 
 ```
 Is this section needed in EVERY session?
-├─ YES → Inline Essential Pattern (Pattern 5)
+├─ YES → Does it contain multi-line code blocks (> 3 lines)?
+│   ├─ YES → Terse Agent Hint Pattern (Pattern 8)
+│   └─ NO → Inline Essential Pattern (Pattern 5)
 └─ NO → Continue...
     │
     Does the section have ONE critical command/rule + verbose details?

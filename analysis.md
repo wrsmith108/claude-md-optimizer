@@ -37,6 +37,7 @@ Keep content inline in CLAUDE.md if it matches these patterns:
 - **Key identifiers**: Container names, package names, project structure used in every command
 - **Critical paths**: File/directory locations referenced by multiple tools
 - **License/pricing summary**: One-table overview of tiers and pricing
+- **Terse format rule**: Essential multi-line code blocks (> 3 lines) should be compressed to single-line command references with sub-doc links. This reduces both system prompt tokens and execution output tokens when the agent runs the commands.
 
 **Example: Keep Inline**
 
@@ -144,6 +145,7 @@ Some content straddles tiers. Document the decision criteria:
 | Git workflow | Essential commands (3-4 one-liners) | Full rebase/worktree procedures with 10+ steps |
 | Tool configuration | Setup command + key env var | Multi-option configuration examples with YAML/JSON |
 | Architecture links | Single line with index link | Table with 10+ doc links and descriptions |
+| Multi-line bash procedures | Terse hint naming commands (< 3 lines) | Full step-by-step with fenced code blocks (>= 3 lines) |
 
 **Split Strategy**: If a section has both essential summary and verbose details, keep the summary inline and extract the details.
 
