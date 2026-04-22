@@ -57,16 +57,15 @@ The 5% tolerance accounts for deduplicated headers and consolidated formatting.
 
 ### Step 2: Reduction Verification
 
-Calculate the reduction percentage:
+Calculate the reduction against the format's target:
 
-```bash
-# Reduction formula
-reduction_percent = (new_claude_lines / original_lines) * 100
-```
+| Format | Pass Criteria | Rationale |
+|--------|--------------|-----------|
+| CLAUDE.md | New file ≤ 200 lines | Anthropic adherence guideline |
+| AGENTS.md | New file meaningfully shorter; combined chain ≤ 32KB | Hard cap; subsystem files add to the total |
+| copilot-instructions.md | New file ≤ 150 lines (~2 pages) | GitHub recommendation |
 
-**Pass criteria**: New CLAUDE.md < 50% of original line count
-
-**Why 50%?** If reduction is less than 50%, the optimization provides minimal benefit and may not justify the complexity of sub-documents.
+**Why not a flat 50% reduction rule?** The goal is to hit the format's own guideline, not an arbitrary percentage. A 250-line CLAUDE.md optimized to 200 lines (20% reduction) is a success. A 300-line copilot-instructions.md optimized to 100 lines (67% reduction) is also a success.
 
 ### Step 3: Link Integrity
 
@@ -156,11 +155,13 @@ git check-attr filter path/to/sub-docs/*.md
 
 ### Step 7: CI Compliance
 
-If CI scripts were detected that read CLAUDE.md (see [constraints.md](./constraints.md#ci-machine-readable-content-detection)):
+If CI scripts were detected that read the instruction file (see [constraints.md](./constraints.md#ci-machine-readable-content-detection)):
 
-- [ ] All CI-scanned regex patterns still match in the new CLAUDE.md
+- [ ] All CI-scanned regex patterns still match in the optimized file
 - [ ] No CI-matched content was extracted to sub-documents
-- [ ] CI audit scripts pass when run against the new CLAUDE.md
+- [ ] CI audit scripts pass when run against the new file
+
+**For all three formats** — CLAUDE.md, AGENTS.md, and copilot-instructions.md — the detection methodology is the same: search for scripts that `readFileSync` or `grep` the file and verify regex matches still work after optimization.
 
 **Verification method:**
 
@@ -311,12 +312,18 @@ Sub-Documents Created:
 
 ## 6. When NOT to Optimize
 
-The skill should decline to optimize if:
+The skill should decline to optimize if the file is already at or below its format threshold:
 
-- **CLAUDE.md is already under 300 lines** — not worth the overhead
+| Format | Decline If | Reason |
+|--------|-----------|--------|
+| CLAUDE.md | <200 lines | Already within Anthropic's recommended range |
+| AGENTS.md | <200 lines and <32KB combined chain | No meaningful reduction possible |
+| copilot-instructions.md | <150 lines | Already ~2 pages or less |
+
+Also decline if:
 - **More than 80% of content is Essential** — nothing meaningful to extract
 - **The project has no documentation directory** — and creating one would be inappropriate
-- **The CLAUDE.md is primarily behavioral rules** — minimal reference content
+- **The file is primarily behavioral rules** — minimal reference content
 
 **In these cases**, report the analysis but recommend no action:
 
@@ -324,18 +331,18 @@ The skill should decline to optimize if:
 Analysis Complete
 =================
 
-CLAUDE.md: 280 lines
-Essential: 240 lines (86%)
-Reference: 40 lines (14%)
+CLAUDE.md: 180 lines (below 200-line threshold)
+Essential: 155 lines (86%)
+Reference: 25 lines (14%)
 
 Recommendation: No optimization needed.
-The file is already compact and most content is essential.
+The file is already within Anthropic's recommended range and most content is essential.
 ```
 
 **Decision criteria:**
 - If `essential_percent > 80%`, decline optimization
-- If `original_lines < 300`, decline optimization
-- If `extractable_lines < 200`, decline optimization (not worth creating sub-docs)
+- If file is below format threshold (see table above), decline optimization
+- If `extractable_lines < 100`, decline optimization (not worth creating sub-docs)
 
 ## 7. Rollback Procedure
 

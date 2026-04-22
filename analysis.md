@@ -1,6 +1,6 @@
 # Content Categorization Methodology
 
-This document defines how the claude-md-optimizer analyzes and categorizes CLAUDE.md content for optimization.
+This document defines how the agent-instructions-optimizer analyzes and categorizes agent instruction files (CLAUDE.md, AGENTS.md, copilot-instructions.md) for optimization.
 
 ## 1. Section Parsing
 
@@ -14,6 +14,22 @@ Parse CLAUDE.md by `##` headers into discrete sections. For each section, measur
 | Command ratio | Ratio of command examples to prose paragraphs |
 
 These metrics inform tier classification decisions.
+
+## 1b. Format-Specific Thresholds
+
+Before categorizing, identify the format and its size target:
+
+| Format | Optimize If | Target After | Adherence Impact |
+|--------|------------|--------------|-----------------|
+| CLAUDE.md | >200 lines | <200 lines | Anthropic: adherence degrades above 200 lines |
+| AGENTS.md | >200 lines or >32KB combined chain | Meaningful reduction; stay under 32KB | 32KB combined limit across all discovered files |
+| copilot-instructions.md | >150 lines | ~100 lines (~2 pages) | GitHub recommends ~2 pages max |
+
+For **CLAUDE.md**: The 200-line target is Anthropic's own recommendation — context window pressure is the primary concern. The `@import` mechanism allows referencing other files that load at session start, making it the preferred extraction path (content stays accessible without link-following).
+
+For **AGENTS.md**: The 32KB limit is a hard cap across the *entire hierarchical chain* (global + repo root + all nested files). Optimize the root first; move subsystem-specific content into `subdirectory/AGENTS.md` files. There is no native import mechanism — use relative markdown links for generic sub-docs.
+
+For **copilot-instructions.md**: GitHub recommends keeping it to approximately 2 pages. Path-scoped `.instructions.md` files are the native extraction mechanism — they load only when Copilot works on matching files, reducing noise without losing coverage.
 
 ## 2. Content Tiers
 
@@ -38,6 +54,7 @@ Keep content inline in CLAUDE.md if it matches these patterns:
 - **Critical paths**: File/directory locations referenced by multiple tools
 - **License/pricing summary**: One-table overview of tiers and pricing
 - **Terse format rule**: Essential multi-line code blocks (> 3 lines) should be compressed to single-line command references with sub-doc links. This reduces both system prompt tokens and execution output tokens when the agent runs the commands.
+- **@import awareness (CLAUDE.md only)**: If essential content is too long to keep inline, use `@path/to/file` import syntax — the file loads at session start and is functionally equivalent to inline content without consuming the primary file's line budget
 
 **Example: Keep Inline**
 
@@ -293,3 +310,49 @@ Report optimization metrics:
 ---
 
 This methodology ensures systematic, consistent categorization while preserving critical context and providing clear user decision points.
+
+## 13. Format-Specific Extraction Strategies
+
+### CLAUDE.md
+
+- **`@import` extraction** (preferred): Move verbose reference sections to separate files and reference with `@path/to/file` in CLAUDE.md. The imported file loads at session start — equivalent to inline content, but organized. No link-following required.
+- **`.claude/rules/` migration** (preferred for rules): Move topic-specific rules to `.claude/rules/topic.md`. Add optional `paths:` frontmatter to scope rules to specific file types — they only load into context when Claude works with matching files.
+  ```
+  ---
+  paths:
+    - "src/**/*.ts"
+    - "tests/**/*.test.ts"
+  ---
+  # TypeScript Rules
+  ...
+  ```
+- **`CLAUDE.local.md` split**: Move personal or sandbox-specific content to `CLAUDE.local.md` (gitignored) — keeps team-shared content clean.
+- **Generic sub-doc**: For content that doesn't fit the above patterns, extract to `docs/development/topic.md` and replace the section inline with "For `<reason>`, see [docs/development/topic.md](docs/development/topic.md)."
+
+### AGENTS.md
+
+- **Subdirectory AGENTS.md**: Move subsystem-specific rules to `services/payments/AGENTS.md`, `packages/ui/AGENTS.md`, etc. Codex and Copilot load these when working in those directories — the content is available exactly when needed.
+- **`.agents/instructions/<ref>.md` + contextual link** (for reference content): Extract to `.agents/instructions/<ref>.md` at the repo root and link from AGENTS.md using: `For <reason>, see [.agents/instructions/<ref>.md](.agents/instructions/<ref>.md).` The reason clause is essential — it tells the agent when the reference is relevant so it knows whether to follow the link. Every `.agents/instructions/<ref>.md` file must have `description:` and `loading_strategy: "lazy"` frontmatter; add `paths:` or `globs:` when content is directory-scoped.
+- **`AGENTS.override.md`**: Use for temporary or environment-specific overrides without modifying the main file.
+- **Do not** use `.agents/instructions/<ref>.md` for content that is needed every session — the agent must follow a link to access it, which creates friction. Keep frequently-needed content inline.
+
+### copilot-instructions.md
+
+- **Path-scoped `.instructions.md`** (preferred for rules): Extract language/framework/directory-specific rules to `.github/instructions/NAME.instructions.md` with `applyTo:` glob frontmatter. Include `description:` and `loading_strategy: "lazy"` in every file. Use file-type globs (`**/*.ts,**/*.tsx`) for language rules; use directory globs (`src/api/**`) for directory rules; combine both when appropriate. Add a `paths:` field alongside `applyTo:` if additional scoping clarity is needed for other tools.
+  - TypeScript rules → `typescript.instructions.md` with `applyTo: "**/*.ts,**/*.tsx"`
+  - Python rules → `python.instructions.md` with `applyTo: "**/*.py"`
+  - Backend rules → `backend.instructions.md` with `applyTo: "src/api/**"`
+- **`.github/copilot/<ref>.md` + contextual link** (for reference content that isn't path-specific): Extract to `.github/copilot/<ref>.md` and link with: `For <reason>, see [.github/copilot/<ref>.md](.github/copilot/<ref>.md).` Every `.github/copilot/<ref>.md` file must have `description:` and `loading_strategy: "lazy"` frontmatter.
+- **`excludeAgent:` scoping**: If a rule applies only to code review (not to agentic tasks), add `excludeAgent: "cloud-agent"` to the frontmatter — prevents irrelevant context injection.
+- **Do not** use `.github/copilot/<ref>.md` for rules that must be active every session — path-scoped `.instructions.md` files or inline content are the right choice for those.
+
+### Choosing Between Extraction Strategies
+
+| Situation | Recommended Strategy |
+|-----------|---------------------|
+| CLAUDE.md rule that's always needed | `@import` into CLAUDE.md |
+| CLAUDE.md rule for specific file types | `.claude/rules/` with `paths:` frontmatter |
+| AGENTS.md rule for a specific service | Nested `AGENTS.md` in that service directory |
+| AGENTS.md reference content (not subsystem-specific) | `.agents/instructions/<ref>.md` + "For `<reason>`, see" link |
+| Copilot rule for a specific language/directory | `.github/instructions/lang.instructions.md` with `applyTo:` |
+| Copilot reference content (not path-specific) | `.github/copilot/<ref>.md` + "For `<reason>`, see" link |
