@@ -1,6 +1,6 @@
 # Content Categorization Methodology
 
-This document defines how the agent-instructions-optimizer analyzes and categorizes agent instruction files (CLAUDE.md, AGENTS.md, copilot-instructions.md) for optimization.
+This document defines how the claude-md-optimizer analyzes and categorizes agent instruction files (CLAUDE.md, AGENTS.md, copilot-instructions.md) for optimization.
 
 ## 1. Section Parsing
 

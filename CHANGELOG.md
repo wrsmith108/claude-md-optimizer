@@ -60,13 +60,9 @@ Lazy frontmatter (`loading_strategy: lazy` on sub-docs) adds no measurable reduc
 
 ### Changed
 
-- Skill renamed from `claude-md-optimizer` to `agent-instructions-optimizer`
 - Phase 5 (Execute) now specifies format-native extraction strategy per format
 - Phase 6 (Validate) references format-specific targets
 - "When NOT to Optimize" thresholds updated: CLAUDE.md <200 lines (was 300), copilot <150 lines (new)
-- Essential Rules section updated with "Format Awareness" block
-- Example Output updated to show all three format scenarios
-- README install path updated to `~/.agents/skills/agent-instructions-optimizer`
 
 ## [1.1.1] - 2026-02-13
 

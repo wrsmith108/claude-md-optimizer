@@ -1,5 +1,5 @@
 {
-  "skill_name": "agent-instructions-optimizer",
+  "skill_name": "claude-md-optimizer",
   "evals": [
     {
       "id": 1,

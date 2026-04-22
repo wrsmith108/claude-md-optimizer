@@ -1,4 +1,4 @@
-# agent-instructions-optimizer
+# claude-md-optimizer
 
 A Claude Code skill that optimizes oversized agent instruction files using progressive disclosure. Handles **CLAUDE.md** (Claude Code), **AGENTS.md** (OpenAI Codex / GitHub Copilot agents), and **copilot-instructions.md** (GitHub Copilot). Auto-detects all three formats, analyzes content tiers, creates sub-documents using each format's native mechanism, and rewrites the main file — with zero information loss.
 
@@ -32,7 +32,7 @@ The skill uses a 6-phase guided workflow:
 Copy this skill to your Claude Code skills directory:
 
 ```bash
-git clone https://github.com/aronDisi/agents-md-optimizer.git ~/.agents/skills/agent-instructions-optimizer
+git clone https://github.com/aronDisi/agents-md-optimizer.git ~/.agents/skills/claude-md-optimizer
 ```
 
 The skill is automatically available in all Claude Code sessions after installation.
@@ -52,7 +52,7 @@ The skill will detect your instruction files, report their sizes, and present a 
 ## Skill Structure
 
 ```
-agent-instructions-optimizer/
+claude-md-optimizer/
 ├── SKILL.md           # Entry point — workflow phases, supported formats, essential rules
 ├── analysis.md        # Content categorization methodology, format thresholds, extraction strategies
 ├── patterns.md        # 13 progressive disclosure patterns including @import, .claude/rules/, path-scoped

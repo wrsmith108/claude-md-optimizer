@@ -1,5 +1,5 @@
 ---
-name: "agent-instructions-optimizer"
+name: "claude-md-optimizer"
 version: "2.0.0"
 description: "Optimize oversized agent instruction files using progressive disclosure. Handles CLAUDE.md (Claude Code), AGENTS.md (OpenAI Codex / GitHub Copilot agents), and copilot-instructions.md (GitHub Copilot). Auto-detects all three formats in your repo, analyzes content tiers, creates sub-documents using each format's native mechanism, and rewrites the main file with zero information loss. Triggers: optimize CLAUDE.md, AGENTS.md too long, reduce copilot-instructions.md, agent instructions file too large, shrink context file, apply progressive disclosure, instructions file bloated"
 tags: ["claude-md", "agents-md", "copilot-instructions", "optimization", "progressive-disclosure", "context-window", "documentation"]
