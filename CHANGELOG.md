@@ -10,6 +10,9 @@
 - Progressive Disclosure guidance in SKILL.md updated to specify synopsis must contain concrete specifics, not just a reason clause
 - Quick Reference Pattern 2 description updated
 - README rewritten with a "Progressive Disclosure Research" section documenting measurement methodology, results table, and platform-level lazy loading findings
+- **`loading_strategy: "lazy"` demoted from required to optional**: no current platform (Claude Code, GitHub Copilot, Codex) reads the field, so it is no longer mandated on sub-docs. `description:` and the platform-specific scoping fields (`applyTo:`, `paths:`) remain the recommended frontmatter; `loading_strategy` is retained only as an optional, forward-looking hint.
+- Corrected platform facts: `@import` max recursion depth is 4 hops (not 5); AGENTS.md combined-size budget is Codex's configurable `project_doc_max_bytes` (32 KiB default), not a hard cross-tool cap; copilot-instructions length is an internal heuristic, not an official GitHub line limit
+- Install instructions fixed to clone into `~/.claude/skills/` from the upstream repo; usage-eval wording softened from "controlled" to "informal" (harness not yet committed)
 
 ### Evidence
 
@@ -50,7 +53,7 @@ Lazy frontmatter (`loading_strategy: lazy` on sub-docs) adds no measurable reduc
 - **AGENTS.md Placement Constraints** section in constraints.md (hierarchy, 32KB limit, AGENTS.override.md)
 - **copilot-instructions.md Placement Constraints** section in constraints.md (`.github/instructions/`, `applyTo:` frontmatter, `excludeAgent:` field)
 - **Pattern 13: Contextual Reference Pattern** — "For `<reason>`, see `.agents/instructions/<ref>.md`" convention for AGENTS.md and "For `<reason>`, see `.github/copilot/<ref>.md`" for copilot-instructions.md; both use dedicated subdirectories (`.agents/instructions/`, `.github/copilot/`) and require the link text to state the reason for following the link
-- **Frontmatter convention for all sub-docs**: `description:` (one-line summary) and `loading_strategy: "lazy"` required in frontmatter of every sub-document (`.claude/rules/*.md`, `.github/instructions/*.instructions.md`, `.agents/instructions/<ref>.md`, `.github/copilot/<ref>.md`); globs or `paths:` fields added where content is directory- or file-type-scoped
+- **Frontmatter convention for all sub-docs**: `description:` (one-line summary) in frontmatter of every sub-document (`.claude/rules/*.md`, `.github/instructions/*.instructions.md`, `.agents/instructions/<ref>.md`, `.github/copilot/<ref>.md`); platform-specific scoping fields (`applyTo:` for Copilot, `paths:`/`globs:` for `.claude/rules/`) added where content is directory- or file-type-scoped
 - Updated decision tree to route AGENTS.md and copilot non-path-specific reference content to Pattern 13
 - Updated SKILL.md Supported Formats table and format descriptions to document contextual reference conventions
 - Updated analysis.md Section 13 AGENTS.md and copilot-instructions.md extraction strategies and "Choosing Between" table

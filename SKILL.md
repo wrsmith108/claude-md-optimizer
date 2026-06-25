@@ -1,6 +1,6 @@
 ---
 name: "claude-md-optimizer"
-version: "2.0.0"
+version: "2.2.0"
 description: "Optimize oversized agent instruction files using progressive disclosure. Handles CLAUDE.md (Claude Code), AGENTS.md (OpenAI Codex / GitHub Copilot agents), and copilot-instructions.md (GitHub Copilot). Auto-detects all three formats in your repo, analyzes content tiers, creates sub-documents using each format's native mechanism, and rewrites the main file with zero information loss. Triggers: optimize CLAUDE.md, AGENTS.md too long, reduce copilot-instructions.md, agent instructions file too large, shrink context file, apply progressive disclosure, instructions file bloated"
 tags: ["claude-md", "agents-md", "copilot-instructions", "optimization", "progressive-disclosure", "context-window", "documentation"]
 ---
@@ -83,15 +83,15 @@ Anthropic recommends **<200 lines** — above this, instruction adherence degrad
 - **`.claude/rules/*.md`**: Topic-specific rule files with optional `paths:` frontmatter to scope rules to file types (only loads when Claude works with matching files, saving context)
 
 ### AGENTS.md
-Plain Markdown, no required schema. Codex and GitHub Copilot load files hierarchically (global → repo root → subdirectory → CWD); files closer to CWD take precedence. Combined 32KB limit across the entire chain. `AGENTS.override.md` at any level takes precedence over `AGENTS.md` at the same level.
+Plain Markdown, no required schema. Codex and GitHub Copilot load files hierarchically (global → repo root → subdirectory → CWD); files closer to CWD take precedence. Codex truncates the combined chain at a configurable budget (`project_doc_max_bytes`, default 32 KiB), so keep the chain within that budget. In Codex, `AGENTS.override.md` at any level takes precedence over `AGENTS.md` at the same level (Codex-specific, not part of the cross-tool agents.md spec).
 
 Two progressive disclosure strategies:
 - **Nested `AGENTS.md` files**: move subsystem-specific rules into `services/payments/AGENTS.md` etc. — auto-discovered when working in that directory
-- **`.agents/instructions/<ref>.md` + contextual link**: for reference content that doesn't belong to a specific subsystem, extract to `.agents/instructions/<ref>.md` and link with "For `<reason>`, see [.agents/instructions/\<ref>.md](.agents/instructions/\<ref>.md)." — the link text carries intent so the agent knows when to follow it. Each sub-doc must include `description:` and `loading_strategy: "lazy"` frontmatter.
+- **`.agents/instructions/<ref>.md` + contextual link**: for reference content that doesn't belong to a specific subsystem, extract to `.agents/instructions/<ref>.md` and link with "For `<reason>`, see [.agents/instructions/\<ref>.md](.agents/instructions/\<ref>.md)." — the link text carries intent so the agent knows when to follow it. Each sub-doc should include a `description:` frontmatter field (a one-line summary).
 
 ### copilot-instructions.md
 Repository-wide instructions in `.github/copilot-instructions.md` (no frontmatter required). Two progressive disclosure strategies:
-- **Path-scoped `.instructions.md` files**: extract language/framework rules to `.github/instructions/NAME.instructions.md` with `applyTo:` frontmatter — load automatically for matching files, no link-following. Include `description:` and `loading_strategy: "lazy"` in frontmatter. If the rules are also scoped to specific directories (not just file types), add directory globs to `applyTo:` or include a `paths:` field alongside it.
+- **Path-scoped `.instructions.md` files**: extract language/framework rules to `.github/instructions/NAME.instructions.md` with `applyTo:` frontmatter — load automatically for matching files, no link-following. `applyTo:` is required; also include a `description:` field. If the rules are also scoped to specific directories (not just file types), add directory globs to `applyTo:` or include a `paths:` field alongside it.
 - **`.github/copilot/<ref>.md` + contextual link**: for reference content that isn't path-specific, extract to `.github/copilot/<ref>.md` and link with "For `<reason>`, see [.github/copilot/\<ref>.md](.github/copilot/\<ref>.md)."
 
 Path-scoped files **supplement** the repo-wide file — both apply when a file matches.
@@ -167,7 +167,7 @@ Path-scoped files **supplement** the repo-wide file — both apply when a file m
 | Format | Goal | Information Loss |
 |--------|------|-----------------|
 | CLAUDE.md | <200 lines (Anthropic guideline) | 0% (content moved, not deleted) |
-| AGENTS.md | Meaningful reduction; stay under 32KB combined | 0% |
+| AGENTS.md | Meaningful reduction; stay within Codex's `project_doc_max_bytes` budget (32 KiB default) | 0% |
 | copilot-instructions.md | ~100 lines (~2 pages) | 0% |
 
 - Essential content remains accessible (inline or via format-native import/reference)

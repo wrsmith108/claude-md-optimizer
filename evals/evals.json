@@ -24,7 +24,7 @@
         "The output root AGENTS.md is under 200 lines",
         "At least one nested AGENTS.md is created for a subsystem (e.g. services/payments/AGENTS.md or services/auth/AGENTS.md)",
         "At least one contextual link in the form 'For <reason>, see .agents/instructions/<ref>.md' is present in the output",
-        "At least one .agents/instructions/<ref>.md file is created with 'description:' and 'loading_strategy: lazy' frontmatter",
+        "At least one .agents/instructions/<ref>.md file is created with a 'description:' frontmatter field",
         "Essential quick commands (uvicorn, pytest, alembic) are kept inline in root AGENTS.md",
         "PR and commit rules are kept inline in root AGENTS.md",
         "All content from the original AGENTS.md is preserved verbatim across the output files collectively (no information loss)"
@@ -39,7 +39,7 @@
         "The output copilot-instructions.md is under 150 lines",
         "A .github/instructions/typescript.instructions.md file is created with applyTo: frontmatter covering TypeScript/TSX files",
         "A .github/instructions/python.instructions.md (or backend equivalent) file is created with applyTo: frontmatter covering Python files",
-        "Path-scoped .instructions.md files contain proper YAML frontmatter with 'applyTo:', 'description:', and 'loading_strategy: lazy' fields",
+        "Path-scoped .instructions.md files contain proper YAML frontmatter with 'applyTo:' and 'description:' fields",
         "Security rules are kept inline in the root copilot-instructions.md",
         "All content from the original copilot-instructions.md is preserved verbatim across the output files collectively (no information loss)"
       ]

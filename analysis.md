@@ -22,14 +22,14 @@ Before categorizing, identify the format and its size target:
 | Format | Optimize If | Target After | Adherence Impact |
 |--------|------------|--------------|-----------------|
 | CLAUDE.md | >200 lines | <200 lines | Anthropic: adherence degrades above 200 lines |
-| AGENTS.md | >200 lines or >32KB combined chain | Meaningful reduction; stay under 32KB | 32KB combined limit across all discovered files |
-| copilot-instructions.md | >150 lines | ~100 lines (~2 pages) | GitHub recommends ~2 pages max |
+| AGENTS.md | >200 lines or >32 KiB combined chain | Meaningful reduction; stay within the chain budget | Codex truncates the chain at `project_doc_max_bytes` (32 KiB default, configurable) |
+| copilot-instructions.md | >150 lines | ~100 lines (~2 pages) | Internal heuristic — GitHub publishes no hard line limit |
 
 For **CLAUDE.md**: The 200-line target is Anthropic's own recommendation — context window pressure is the primary concern. The `@import` mechanism allows referencing other files that load at session start, making it the preferred extraction path (content stays accessible without link-following).
 
-For **AGENTS.md**: The 32KB limit is a hard cap across the *entire hierarchical chain* (global + repo root + all nested files). Optimize the root first; move subsystem-specific content into `subdirectory/AGENTS.md` files. There is no native import mechanism — use relative markdown links for generic sub-docs.
+For **AGENTS.md**: Codex truncates the combined hierarchical chain (global + repo root + all nested files) once it reaches `project_doc_max_bytes` — 32 KiB by default, and configurable (e.g. `project_doc_max_bytes = 65536`). It is a Codex-specific budget, not a hard cross-tool limit. Optimize the root first; move subsystem-specific content into `subdirectory/AGENTS.md` files. There is no native import mechanism — use relative markdown links for generic sub-docs.
 
-For **copilot-instructions.md**: GitHub recommends keeping it to approximately 2 pages. Path-scoped `.instructions.md` files are the native extraction mechanism — they load only when Copilot works on matching files, reducing noise without losing coverage.
+For **copilot-instructions.md**: GitHub publishes no hard length limit for hand-written instructions; ~2 pages is an internal heuristic for keeping the file focused. Path-scoped `.instructions.md` files are the native extraction mechanism — they load only when Copilot works on matching files, reducing noise without losing coverage.
 
 ## 2. Content Tiers
 
@@ -332,17 +332,17 @@ This methodology ensures systematic, consistent categorization while preserving 
 ### AGENTS.md
 
 - **Subdirectory AGENTS.md**: Move subsystem-specific rules to `services/payments/AGENTS.md`, `packages/ui/AGENTS.md`, etc. Codex and Copilot load these when working in those directories — the content is available exactly when needed.
-- **`.agents/instructions/<ref>.md` + contextual link** (for reference content): Extract to `.agents/instructions/<ref>.md` at the repo root and link from AGENTS.md using: `For <reason>, see [.agents/instructions/<ref>.md](.agents/instructions/<ref>.md).` The reason clause is essential — it tells the agent when the reference is relevant so it knows whether to follow the link. Every `.agents/instructions/<ref>.md` file must have `description:` and `loading_strategy: "lazy"` frontmatter; add `paths:` or `globs:` when content is directory-scoped.
-- **`AGENTS.override.md`**: Use for temporary or environment-specific overrides without modifying the main file.
+- **`.agents/instructions/<ref>.md` + contextual link** (for reference content): Extract to `.agents/instructions/<ref>.md` at the repo root and link from AGENTS.md using: `For <reason>, see [.agents/instructions/<ref>.md](.agents/instructions/<ref>.md).` The reason clause is essential — it tells the agent when the reference is relevant so it knows whether to follow the link. Each `.agents/instructions/<ref>.md` file should carry a `description:` frontmatter field (one-line summary); add `paths:` or `globs:` when content is directory-scoped. (No AGENTS.md consumer reads frontmatter today, so treat these as documentation aids.)
+- **`AGENTS.override.md`** *(Codex-specific)*: Use for temporary or environment-specific overrides without modifying the main file.
 - **Do not** use `.agents/instructions/<ref>.md` for content that is needed every session — the agent must follow a link to access it, which creates friction. Keep frequently-needed content inline.
 
 ### copilot-instructions.md
 
-- **Path-scoped `.instructions.md`** (preferred for rules): Extract language/framework/directory-specific rules to `.github/instructions/NAME.instructions.md` with `applyTo:` glob frontmatter. Include `description:` and `loading_strategy: "lazy"` in every file. Use file-type globs (`**/*.ts,**/*.tsx`) for language rules; use directory globs (`src/api/**`) for directory rules; combine both when appropriate. Add a `paths:` field alongside `applyTo:` if additional scoping clarity is needed for other tools.
+- **Path-scoped `.instructions.md`** (preferred for rules): Extract language/framework/directory-specific rules to `.github/instructions/NAME.instructions.md` with `applyTo:` glob frontmatter. `applyTo:` is required; also include a `description:` field in every file. Use file-type globs (`**/*.ts,**/*.tsx`) for language rules; use directory globs (`src/api/**`) for directory rules; combine both when appropriate. Add a `paths:` field alongside `applyTo:` if additional scoping clarity is needed for other tools.
   - TypeScript rules → `typescript.instructions.md` with `applyTo: "**/*.ts,**/*.tsx"`
   - Python rules → `python.instructions.md` with `applyTo: "**/*.py"`
   - Backend rules → `backend.instructions.md` with `applyTo: "src/api/**"`
-- **`.github/copilot/<ref>.md` + contextual link** (for reference content that isn't path-specific): Extract to `.github/copilot/<ref>.md` and link with: `For <reason>, see [.github/copilot/<ref>.md](.github/copilot/<ref>.md).` Every `.github/copilot/<ref>.md` file must have `description:` and `loading_strategy: "lazy"` frontmatter.
+- **`.github/copilot/<ref>.md` + contextual link** (for reference content that isn't path-specific): Extract to `.github/copilot/<ref>.md` and link with: `For <reason>, see [.github/copilot/<ref>.md](.github/copilot/<ref>.md).` Each `.github/copilot/<ref>.md` file should carry a `description:` frontmatter field (one-line summary).
 - **`excludeAgent:` scoping**: If a rule applies only to code review (not to agentic tasks), add `excludeAgent: "cloud-agent"` to the frontmatter — prevents irrelevant context injection.
 - **Do not** use `.github/copilot/<ref>.md` for rules that must be active every session — path-scoped `.instructions.md` files or inline content are the right choice for those.
 

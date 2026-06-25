@@ -62,8 +62,8 @@ Calculate the reduction against the format's target:
 | Format | Pass Criteria | Rationale |
 |--------|--------------|-----------|
 | CLAUDE.md | New file ≤ 200 lines | Anthropic adherence guideline |
-| AGENTS.md | New file meaningfully shorter; combined chain ≤ 32KB | Hard cap; subsystem files add to the total |
-| copilot-instructions.md | New file ≤ 150 lines (~2 pages) | GitHub recommendation |
+| AGENTS.md | New file meaningfully shorter; combined chain ≤ 32 KiB | Codex's default `project_doc_max_bytes` budget (configurable); subsystem files add to the total |
+| copilot-instructions.md | New file ≤ 150 lines (~2 pages) | Internal heuristic — GitHub publishes no hard line limit |
 
 **Why not a flat 50% reduction rule?** The goal is to hit the format's own guideline, not an arbitrary percentage. A 250-line CLAUDE.md optimized to 200 lines (20% reduction) is a success. A 300-line copilot-instructions.md optimized to 100 lines (67% reduction) is also a success.
 
@@ -317,7 +317,7 @@ The skill should decline to optimize if the file is already at or below its form
 | Format | Decline If | Reason |
 |--------|-----------|--------|
 | CLAUDE.md | <200 lines | Already within Anthropic's recommended range |
-| AGENTS.md | <200 lines and <32KB combined chain | No meaningful reduction possible |
+| AGENTS.md | <200 lines and within Codex's 32 KiB default budget | No meaningful reduction possible |
 | copilot-instructions.md | <150 lines | Already ~2 pages or less |
 
 Also decline if:

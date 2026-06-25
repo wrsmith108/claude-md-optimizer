@@ -56,7 +56,7 @@ Aim for 3–5 sentences containing:
 
 ### Evidence
 
-A controlled usage eval compared four strategies across focused and ambiguous tasks (see `evals/` for fixtures):
+An informal usage eval compared four strategies across focused and ambiguous tasks (input fixtures in `evals/`; measurement was manual, harness not yet committed):
 
 | Strategy | Focused task reads | Ambiguous task reads |
 |---|---|---|
@@ -272,9 +272,9 @@ All commands run inside Docker: `docker exec myapp-dev-1 npm <cmd>`
 
 ### Rules
 
-- The `@` must be at the start of a line
+- An `@import` is recognized inline (anywhere in a line), but is ignored inside code spans and fenced code blocks
 - Both relative and absolute paths are supported; relative paths resolve from the importing file
-- Imported files can recursively import other files (max depth: 5 hops)
+- Imported files can recursively import other files (max depth: 4 hops)
 - Use `@` imports as a first-class alternative to inline content, not as a link-following pattern
 - Prefer `@import` over generic markdown links for CLAUDE.md — the file loads automatically, no manual navigation required
 
@@ -299,7 +299,6 @@ Move topic-specific rules from CLAUDE.md into `.claude/rules/topic.md` files. Ru
 ```markdown
 ---
 description: "TypeScript strict-mode rules for src/ and test files"
-loading_strategy: "lazy"
 paths:
   - "src/**/*.ts"
   - "src/**/*.tsx"
@@ -373,7 +372,6 @@ Extract language, framework, or directory-specific rules from `.github/copilot-i
 ```markdown
 ---
 description: "TypeScript and React coding standards"
-loading_strategy: "lazy"
 applyTo: "**/*.ts,**/*.tsx"
 ---
 
@@ -385,7 +383,6 @@ applyTo: "**/*.ts,**/*.tsx"
 ```markdown
 ---
 description: "Python coding standards and type-hint conventions"
-loading_strategy: "lazy"
 applyTo: "**/*.py"
 ---
 
@@ -397,7 +394,6 @@ Directory-scoped example (backend API only):
 ```markdown
 ---
 description: "FastAPI backend conventions for src/api/"
-loading_strategy: "lazy"
 applyTo: "src/api/**"
 ---
 ```
@@ -415,8 +411,8 @@ applyTo: "src/api/**"
 - `applyTo:` (required): glob pattern(s), comma-separated. Use file-type globs (`**/*.ts`) for language rules; use directory globs (`src/api/**`) for directory rules; combine both when appropriate (`src/api/**/*.ts`)
 - If additional `paths:` or `globs:` scoping would clarify intent for other tools (e.g., language servers or custom agents), include them in the frontmatter alongside `applyTo:`
 - `excludeAgent:` (optional): `"code-review"` or `"cloud-agent"` to restrict to one consumer
-- `description:` (required): one-line summary of what this file governs — surfaces in frontmatter readers without opening the file
-- `loading_strategy: "lazy"` (required): signals that this file loads on demand, not at session start
+- `description:` (recommended): one-line summary of what this file governs — surfaces in frontmatter readers without opening the file
+- `loading_strategy:` is **not** a field GitHub Copilot reads — omit it; instructions load eagerly, and `applyTo:` is what scopes them
 - Path-scoped files **supplement** (not replace) the repo-wide file — both apply when a file matches
 - Keep a pointer in the repo-wide file so humans can discover the scoped rules
 
@@ -479,7 +475,6 @@ For rebuild procedures and DNS troubleshooting, see [.agents/instructions/docker
 ```markdown
 ---
 description: "Docker rebuild procedures and DNS troubleshooting for the dev environment"
-loading_strategy: "lazy"
 ---
 
 [full extracted content verbatim]
@@ -514,7 +509,6 @@ For branch protection rules, required checks, and CI pipeline details, see [.git
 ```markdown
 ---
 description: "CI pipeline stages, branch protection rules, and required checks"
-loading_strategy: "lazy"
 ---
 
 [full extracted content verbatim]
@@ -535,7 +529,7 @@ Do **not** use Pattern 13 for Essential content — the agent must follow a link
 - **One sentence, one reason**: each reference sentence covers one topic; don't stack multiple sub-docs into one sentence
 - **Verbatim extraction**: sub-doc content is copied exactly from the original file, never summarized
 - **Relative paths**: use paths relative to the main file's location
-- **Frontmatter required**: every sub-doc must have YAML frontmatter with `description:` (one-line summary) and `loading_strategy: "lazy"`. If the content is scoped to specific paths or globs, include those too.
+- **Frontmatter**: every sub-doc should carry a `description:` (one-line summary) in YAML frontmatter; if the content is scoped to specific paths or globs, include those too. (No AGENTS.md or copilot consumer reads sub-doc frontmatter today — treat it as a documentation aid, not a load directive.)
 - **Self-contained sub-docs**: each sub-doc should open with a `#` heading so it's readable standalone (the frontmatter `description:` covers the brief summary)
 
 ---

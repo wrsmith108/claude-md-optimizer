@@ -267,7 +267,7 @@ AGENTS.md uses a hierarchical discovery system — placement determines scope.
 1. **Global**: `~/.codex/AGENTS.md` (or `AGENTS.override.md`) — applies to all repos
 2. **Repo root**: `./AGENTS.md` — applies to the whole project
 3. **Subdirectories**: `./services/payments/AGENTS.md` — applies when working in that subtree
-4. **Override**: `AGENTS.override.md` at any level takes precedence over `AGENTS.md` at the same level
+4. **Override** *(Codex-specific)*: `AGENTS.override.md` at any level takes precedence over `AGENTS.md` at the same level — not part of the cross-tool agents.md spec
 
 Files closer to the current working directory are concatenated later and therefore take precedence.
 
@@ -275,16 +275,16 @@ Files closer to the current working directory are concatenated later and therefo
 
 - AGENTS.md has **no native @import mechanism** — use `.agents/instructions/<ref>.md` + "For `<reason>`, see" links for reference content
 - Place `.agents/instructions/` subdirectory at the repo root alongside AGENTS.md (not inside `src/` or other code directories)
-- All `.agents/instructions/<ref>.md` files must have `description:` and `loading_strategy: "lazy"` frontmatter; add `paths:` or `globs:` frontmatter when the content is scoped to specific directories
+- Each `.agents/instructions/<ref>.md` file should carry a `description:` frontmatter field; add `paths:` or `globs:` when the content is scoped to specific directories (no AGENTS.md consumer reads frontmatter today — these are documentation aids)
 - Nested `AGENTS.md` files in subdirectories are the preferred extraction target for subsystem-specific content
-- Respect the 32KB combined chain limit — check `wc -c` on all discovered files after optimization
+- Respect Codex's combined-chain budget (`project_doc_max_bytes`, 32 KiB default, configurable) — check `wc -c` on all discovered files after optimization
 
 ### Constraint Report Format (AGENTS.md)
 
 ```
 AGENTS.md Constraints:
   Format:           AGENTS.md (OpenAI Codex / GitHub Copilot)
-  Current size:     28KB root + 4KB nested = 32KB (at limit!)
+  Current size:     28KB root + 4KB nested = 32KB (at the default 32 KiB budget)
   Subdirectory files: services/payments/AGENTS.md (1.2KB)
   No native @import: generic sub-docs require explicit markdown links
 
@@ -306,10 +306,10 @@ Recommended extraction:
 
 - The `.github/` directory must exist (create if needed)
 - Path-scoped files must be in `.github/instructions/` or subdirectories, filename must end with `.instructions.md`, and `applyTo:` frontmatter is **required**
-- All `.github/instructions/*.instructions.md` files must include `description:` (one-line summary) and `loading_strategy: "lazy"` frontmatter; use `applyTo:` for file-type globs and add `paths:` for directory scoping when needed
+- All `.github/instructions/*.instructions.md` files require `applyTo:` frontmatter and should include a `description:` (one-line summary); use `applyTo:` for file-type globs and add `paths:` for directory scoping when needed
 - Reference sub-docs live in `.github/copilot/` — create this directory if it doesn't exist
 - Use "For `<reason>`, see [.github/copilot/\<ref>.md](.github/copilot/\<ref>.md)." link text in the main file
-- All `.github/copilot/<ref>.md` files must have `description:` and `loading_strategy: "lazy"` frontmatter
+- Each `.github/copilot/<ref>.md` file should carry a `description:` frontmatter field
 - `excludeAgent: "code-review"` or `excludeAgent: "cloud-agent"` frontmatter restricts path-scoped files to one consumer
 - Path-scoped `.instructions.md` files **supplement** the repo-wide file — both are injected when a file matches
 

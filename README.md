@@ -13,7 +13,7 @@ Projects with 6+ months of development commonly reach 800–1,500+ lines.
 | Format | Primary Location | Target Size | Native Sub-Doc Mechanism |
 |--------|-----------------|-------------|--------------------------|
 | CLAUDE.md | `./CLAUDE.md` or `./.claude/CLAUDE.md` | <200 lines | `@import` syntax; `.claude/rules/*.md` |
-| AGENTS.md | `./AGENTS.md` (hierarchical) | <32KB combined | Nested `AGENTS.md` in subdirectories |
+| AGENTS.md | `./AGENTS.md` (hierarchical) | <32 KiB chain (Codex default) | Nested `AGENTS.md` in subdirectories |
 | copilot-instructions.md | `.github/copilot-instructions.md` | ~100 lines | `.github/instructions/NAME.instructions.md` |
 
 ## How It Works
@@ -29,10 +29,10 @@ The skill uses a 6-phase guided workflow:
 
 ## Install
 
-Copy this skill to your Claude Code skills directory:
+This skill is published as a Claude Code plugin (see [skillsmith.app](https://skillsmith.app)). To install it manually, clone it into your Claude Code skills directory:
 
 ```bash
-git clone https://github.com/aronDisi/agents-md-optimizer.git ~/.agents/skills/claude-md-optimizer
+git clone https://github.com/wrsmith108/claude-md-optimizer.git ~/.claude/skills/claude-md-optimizer
 ```
 
 The skill is automatically available in all Claude Code sessions after installation.
@@ -92,7 +92,7 @@ A rich abstract like this:
 
 ### Measured results
 
-We ran a controlled usage eval comparing four strategies across focused and open-ended tasks (fixtures in `evals/fixtures/usage-eval-*/`). Each task asked an agent to complete a realistic developer request using an optimized instruction file with 5 sub-documents. We counted how many sub-doc files the agent actually opened:
+We ran an informal usage eval comparing four strategies across focused and open-ended tasks (input fixtures in `evals/fixtures/usage-eval-*/`; the measurement was done manually and the harness is not yet committed). Each task asked an agent to complete a realistic developer request using an optimized instruction file with 5 sub-documents. We counted how many sub-doc files the agent actually opened:
 
 | Strategy | Focused task | Ambiguous task |
 |---|---|---|
@@ -130,8 +130,8 @@ Rich abstracts address both: a shorter main file at startup, and fewer file read
 The skill will decline to optimize if:
 
 - CLAUDE.md is under 200 lines (Anthropic's recommended range)
-- AGENTS.md is under 200 lines and combined chain is under 32KB
-- copilot-instructions.md is under 150 lines (~1 page)
+- AGENTS.md is under 200 lines and the combined chain is within Codex's 32 KiB default budget
+- copilot-instructions.md is under 150 lines (~2 pages)
 - More than 80% of content is Essential
 
 ## License
