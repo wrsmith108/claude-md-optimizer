@@ -1,0 +1,48 @@
+{
+  "skill_name": "claude-md-optimizer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "My CLAUDE.md has gotten really long — it's at 270 lines now and I feel like Claude is getting less focused and occasionally missing things. Can you help me slim it down using progressive disclosure?",
+      "expected_output": "Optimized CLAUDE.md under 200 lines with @import references or .claude/rules/ files for extracted content; inline contextual references ('For X, see docs/Y.md') replacing extracted sections at the point of relevance; zero information loss; security rules and test patterns kept inline.",
+      "files": ["evals/fixtures/claude-md-scenario/CLAUDE.md"],
+      "assertions": [
+        "The output CLAUDE.md is under 200 lines",
+        "The output CLAUDE.md contains at least one @import reference to an extracted sub-document",
+        "At least one inline contextual reference ('For <reason>, see docs/Y.md') replacing an extracted section is present in CLAUDE.md at the point of relevance",
+        "Security rules (NEVER commit API keys, bcrypt, rate-limit) are kept inline in CLAUDE.md",
+        "Test file patterns (*.test.ts, 80% coverage) are kept inline in CLAUDE.md",
+        "All content from the original CLAUDE.md is preserved verbatim in the output files collectively (no information loss)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Our AGENTS.md is getting way too long — it's 264 lines and covers the payments service, auth service, and notifications service all in one file. CI details and the whole onboarding section are in there too. Help me reorganize it so the root file is lean and agents get subsystem-specific context automatically.",
+      "expected_output": "Root AGENTS.md under 200 lines; nested AGENTS.md files created for payments and/or auth subsystems; reference content extracted to .agents/instructions/<ref>.md with contextual 'For <reason>, see' links; essential commands and PR rules kept inline.",
+      "files": ["evals/fixtures/agents-md-scenario/AGENTS.md"],
+      "assertions": [
+        "The output root AGENTS.md is under 200 lines",
+        "At least one nested AGENTS.md is created for a subsystem (e.g. services/payments/AGENTS.md or services/auth/AGENTS.md)",
+        "At least one contextual link in the form 'For <reason>, see .agents/instructions/<ref>.md' is present in the output",
+        "At least one .agents/instructions/<ref>.md file is created with a 'description:' frontmatter field",
+        "Essential quick commands (uvicorn, pytest, alembic) are kept inline in root AGENTS.md",
+        "PR and commit rules are kept inline in root AGENTS.md",
+        "All content from the original AGENTS.md is preserved verbatim across the output files collectively (no information loss)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The .github/copilot-instructions.md in my project has ballooned to 183 lines. It has detailed TypeScript rules, Python rules, architecture details, and CI pipeline info all in one file. Copilot keeps injecting rules irrelevant to the file I'm editing. Can you optimize it?",
+      "expected_output": "Root copilot-instructions.md under 150 lines; TypeScript rules extracted to .github/instructions/typescript.instructions.md with applyTo: frontmatter; Python rules extracted to .github/instructions/python.instructions.md with applyTo: frontmatter; reference content to .github/copilot/<ref>.md with contextual links; security rules and PR conventions kept inline.",
+      "files": ["evals/fixtures/copilot-instructions-scenario/copilot-instructions.md"],
+      "assertions": [
+        "The output copilot-instructions.md is under 150 lines",
+        "A .github/instructions/typescript.instructions.md file is created with applyTo: frontmatter covering TypeScript/TSX files",
+        "A .github/instructions/python.instructions.md (or backend equivalent) file is created with applyTo: frontmatter covering Python files",
+        "Path-scoped .instructions.md files contain proper YAML frontmatter with 'applyTo:' and 'description:' fields",
+        "Security rules are kept inline in the root copilot-instructions.md",
+        "All content from the original copilot-instructions.md is preserved verbatim across the output files collectively (no information loss)"
+      ]
+    }
+  ]
+}
