@@ -343,7 +343,7 @@ This methodology ensures systematic, consistent categorization while preserving 
   - Python rules → `python.instructions.md` with `applyTo: "**/*.py"`
   - Backend rules → `backend.instructions.md` with `applyTo: "src/api/**"`
 - **`.github/copilot/<ref>.md` + contextual link** (for reference content that isn't path-specific): Extract to `.github/copilot/<ref>.md` and link with: `For <reason>, see [.github/copilot/<ref>.md](.github/copilot/<ref>.md).` Each `.github/copilot/<ref>.md` file should carry a `description:` frontmatter field (one-line summary).
-- **`excludeAgent:` scoping**: If a rule applies only to code review (not to agentic tasks), add `excludeAgent: "cloud-agent"` to the frontmatter — prevents irrelevant context injection.
+- **`excludeAgent:` scoping**: Restrict a path-scoped file to one consumer with `excludeAgent: "code-review"` or `excludeAgent: "cloud-agent"`. For example, if a rule applies only to code review (not to agentic tasks), `excludeAgent: "cloud-agent"` keeps the cloud agent from injecting it.
 - **Do not** use `.github/copilot/<ref>.md` for rules that must be active every session — path-scoped `.instructions.md` files or inline content are the right choice for those.
 
 ### Choosing Between Extraction Strategies
